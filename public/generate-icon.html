@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body>
+<canvas id="canvas" width="1024" height="1024"></canvas>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+// Gradient background
+const gradient = ctx.createLinearGradient(0, 0, 1024, 1024);
+gradient.addColorStop(0, '#667eea');
+gradient.addColorStop(1, '#764ba2');
+ctx.fillStyle = gradient;
+ctx.fillRect(0, 0, 1024, 1024);
+
+// Wave emoji
+ctx.font = '500px Arial';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText('🌊', 512, 512);
+
+console.log('Icon generated! Right-click canvas and save as icon.png');
+</script>
+</body>
+</html>

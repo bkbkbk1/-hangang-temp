@@ -1,0 +1,12 @@
+{
+  "miniapp": {
+    "version": "1",
+    "name": "한강 몇도?",
+    "homeUrl": "https://hangang-temp-dusky.vercel.app/",
+    "iconUrl": "https://via.placeholder.com/1024x1024/667eea/ffffff?text=🌊",
+    "subtitle": "한강 수온 예측 게임",
+    "description": "매일 12시, 18시 한강 수온을 맞춰보세요! 가장 정확하게 예측한 사람이 1등! 🌊",
+    "primaryCategory": "games",
+    "tags": ["game", "prediction", "korea", "hangang"]
+  }
+}
