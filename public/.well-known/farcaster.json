@@ -1,4 +1,9 @@
 {
+  "accountAssociation": {
+    "header": "eyJmaWQiOjI3MDAzMCwidHlwZSI6ImF1dGgiLCJrZXkiOiIweDA3RUU1MDVjNzY2MThjQjg1ZDZhMjNmZGRCOEI4NjczMDQ3NmU0MTIifQ",
+    "payload": "eyJkb21haW4iOiJoYW5nYW5nLXRlbXAtZHVza3kudmVyY2VsLmFwcCJ9",
+    "signature": "Ko+HAizxLSeDEPI3Aji8k414zrHC/QIj399yzh+oIoBetT5PVskQsjkMRnwmX+xIPzXMgZoHgUoVXZT5CXNIGRs="
+  },
   "miniapp": {
     "version": "1",
     "name": "한강 몇도?",
