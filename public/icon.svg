@@ -1,0 +1,36 @@
+<svg width="1024" height="1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Gradient Background -->
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" fill="url(#grad)" rx="180"/>
+
+  <!-- White Circle Background -->
+  <circle cx="512" cy="450" r="320" fill="white" opacity="0.95"/>
+
+  <!-- Water Wave Icon (Simple waves) -->
+  <g transform="translate(512, 450)">
+    <!-- Wave 1 -->
+    <path d="M -200,0 Q -150,-40 -100,0 T 0,0 T 100,0 T 200,0"
+          stroke="#667eea" stroke-width="24" fill="none" stroke-linecap="round"/>
+    <!-- Wave 2 -->
+    <path d="M -200,50 Q -150,10 -100,50 T 0,50 T 100,50 T 200,50"
+          stroke="#764ba2" stroke-width="20" fill="none" stroke-linecap="round" opacity="0.7"/>
+    <!-- Wave 3 -->
+    <path d="M -200,90 Q -150,50 -100,90 T 0,90 T 100,90 T 200,90"
+          stroke="#667eea" stroke-width="16" fill="none" stroke-linecap="round" opacity="0.5"/>
+  </g>
+
+  <!-- Temperature Symbol -->
+  <text x="512" y="340" font-family="Arial, sans-serif" font-size="120" font-weight="bold"
+        fill="#667eea" text-anchor="middle">?°C</text>
+
+  <!-- Title Text -->
+  <text x="512" y="720" font-family="Arial, sans-serif" font-size="80" font-weight="bold"
+        fill="white" text-anchor="middle">한강 몇도?</text>
+</svg>
