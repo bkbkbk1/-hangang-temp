@@ -13,5 +13,8 @@
     "description": "매일 12시, 18시 한강 수온을 맞춰보세요! 가장 정확하게 예측한 사람이 1등!",
     "primaryCategory": "games",
     "tags": ["game", "prediction", "korea", "hangang"]
+  },
+  "baseBuilder": {
+    "ownerAddress": "0x777BEF71B74F71a97925e6D2AF3786EC08A23923"
   }
 }
