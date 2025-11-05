@@ -1,6 +1,7 @@
 import { sdk } from '@farcaster/frame-sdk'
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
+import { translations, type Language } from './lib/translations'
 import './App.css'
 
 function App() {
@@ -13,6 +14,9 @@ function App() {
   const [actualTemp, setActualTemp] = useState<number | null>(null)
   const [difference, setDifference] = useState<number | null>(null)
   const [usernameCache, setUsernameCache] = useState<{[key: string]: string}>({})
+  const [language, setLanguage] = useState<Language>('ko')
+
+  const t = translations[language]
 
   useEffect(() => {
     const init = async () => {
@@ -186,9 +190,19 @@ function App() {
   return (
     <div className="app">
       <header>
-        <h1>🌊 한강 몇도?</h1>
-        <p>오늘의 한강 수온을 맞춰보세요!</p>
-        <p className="update-info">⏱️ 1시간마다 물온도 업데이트</p>
+        <div className="header-content">
+          <div>
+            <h1>🌊 {t.title}</h1>
+            <p>{t.subtitle}</p>
+            <p className="update-info">⏱️ {t.updateInfo}</p>
+          </div>
+          <button
+            className="language-toggle"
+            onClick={() => setLanguage(language === 'ko' ? 'en' : 'ko')}
+          >
+            {language === 'ko' ? 'EN' : 'KO'}
+          </button>
+        </div>
       </header>
 
       {!isSubmitted ? (
@@ -218,41 +232,41 @@ function App() {
             disabled={loading}
             className="submit-button"
           >
-            {loading ? '확인 중...' : '정답 확인하기'}
+            {loading ? t.checking : t.checkAnswer}
           </button>
 
           <div className="info-box">
-            <p>🌊 실시간 한강 수온을 맞춰보세요!</p>
-            <p>⏱️ 한강 수온은 1시간마다 업데이트됩니다</p>
+            <p>🌊 {t.infoRealtime}</p>
+            <p>⏱️ {t.infoUpdate}</p>
           </div>
         </div>
       ) : (
         <div className="result-section">
-          <h2>🎯 결과 발표!</h2>
+          <h2>🎯 {t.resultTitle}</h2>
           <div className="result-box">
             <div className="result-item">
-              <span className="label">내 예측:</span>
+              <span className="label">{t.myPrediction}</span>
               <span className="value">{prediction}°C</span>
             </div>
             <div className="result-item highlight">
-              <span className="label">실제 온도:</span>
+              <span className="label">{t.actualTemp}</span>
               <span className="value">{actualTemp}°C</span>
             </div>
             <div className="result-item">
-              <span className="label">오차:</span>
+              <span className="label">{t.difference}</span>
               <span className="value">±{difference?.toFixed(1)}°C</span>
             </div>
           </div>
 
           <div className="info-message">
             {difference !== null && difference < 0.5 && (
-              <p>🎉 완벽합니다! 거의 정확하게 맞추셨어요!</p>
+              <p>🎉 {t.perfect}</p>
             )}
             {difference !== null && difference >= 0.5 && difference < 2 && (
-              <p>👍 훌륭합니다! 매우 근접했어요!</p>
+              <p>👍 {t.great}</p>
             )}
             {difference !== null && difference >= 2 && (
-              <p>💪 다시 도전해보세요!</p>
+              <p>💪 {t.tryAgain}</p>
             )}
           </div>
 
@@ -265,7 +279,7 @@ function App() {
             }}
             className="retry-button"
           >
-            다시 맞추기
+            {t.playAgain}
           </button>
         </div>
       )}
@@ -275,15 +289,15 @@ function App() {
           onClick={() => setShowLeaderboard(!showLeaderboard)}
           className="toggle-button"
         >
-          {showLeaderboard ? '게임으로 돌아가기' : '🏆 리더보드 보기'}
+          {showLeaderboard ? t.backToGame : `🏆 ${t.leaderboardToggle}`}
         </button>
       </div>
 
       {showLeaderboard && (
         <div className="leaderboard-section">
-          <h2>🏆 TOP 10 리더보드</h2>
+          <h2>🏆 {t.leaderboardTitle}</h2>
           {leaderboard.length === 0 ? (
-            <p className="no-data">아직 완료된 예측이 없습니다</p>
+            <p className="no-data">{t.noData}</p>
           ) : (
             <div className="leaderboard-list">
               {leaderboard.map((entry: any, index: number) => (
@@ -291,9 +305,11 @@ function App() {
                   <span className="rank">#{index + 1}</span>
                   <div className="leader-info">
                     <span className="user-id">@{entry.username}</span>
-                    <span className="prediction">{entry.accurate_count}회 맞춤 (총 {entry.total_attempts}회)</span>
+                    <span className="prediction">
+                      {entry.accurate_count} {t.timesCorrect} ({t.totalAttempts} {entry.total_attempts} {t.attempts})
+                    </span>
                   </div>
-                  <span className="diff">최고 ±{entry.best_difference.toFixed(1)}°C</span>
+                  <span className="diff">{t.best} ±{entry.best_difference.toFixed(1)}°C</span>
                 </div>
               ))}
             </div>
@@ -303,7 +319,7 @@ function App() {
 
       <footer>
         <p className="footer-text">
-          실시간 한강 수온 퀴즈 | 오차가 적을수록 순위가 올라갑니다
+          {t.footer}
         </p>
       </footer>
     </div>
