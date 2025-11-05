@@ -7,16 +7,16 @@ function App() {
   const [prediction, setPrediction] = useState(15)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [nextDrawTime, setNextDrawTime] = useState('')
   const [userId, setUserId] = useState<string>('')
   const [leaderboard, setLeaderboard] = useState<any[]>([])
   const [showLeaderboard, setShowLeaderboard] = useState(false)
+  const [actualTemp, setActualTemp] = useState<number | null>(null)
+  const [difference, setDifference] = useState<number | null>(null)
 
   useEffect(() => {
     const init = async () => {
       try {
         await sdk.actions.ready()
-        updateNextDrawTime()
 
         // Get user ID from Farcaster SDK
         const context = await sdk.context
@@ -49,67 +49,61 @@ function App() {
     }
   }
 
-  const updateNextDrawTime = () => {
-    const now = new Date()
-    const hour = now.getHours()
+  const fetchActualTemperature = async () => {
+    try {
+      const response = await fetch('https://api.hangang.life')
+      const data = await response.json()
 
-    let nextDraw = new Date(now)
-    if (hour < 12) {
-      nextDraw.setHours(12, 0, 0, 0)
-      setNextDrawTime('오늘 12:00')
-    } else if (hour < 18) {
-      nextDraw.setHours(18, 0, 0, 0)
-      setNextDrawTime('오늘 18:00')
-    } else {
-      nextDraw.setDate(nextDraw.getDate() + 1)
-      nextDraw.setHours(12, 0, 0, 0)
-      setNextDrawTime('내일 12:00')
+      // Calculate average temperature from all stations
+      const temps = Object.values(data.DATAs.DATA.HANGANG).map(
+        (station: any) => station.TEMP
+      )
+      const avgTemp = temps.reduce((a: number, b: number) => a + b, 0) / temps.length
+      const roundedTemp = Math.round(avgTemp * 10) / 10
+
+      return roundedTemp
+    } catch (error) {
+      console.error('Error fetching temperature:', error)
+      return null
     }
-  }
-
-
-  const getNextDrawTime = () => {
-    const now = new Date()
-    const hour = now.getHours()
-
-    let nextDraw = new Date(now)
-    if (hour < 12) {
-      nextDraw.setHours(12, 0, 0, 0)
-    } else if (hour < 18) {
-      nextDraw.setHours(18, 0, 0, 0)
-    } else {
-      nextDraw.setDate(nextDraw.getDate() + 1)
-      nextDraw.setHours(12, 0, 0, 0)
-    }
-
-    return nextDraw.toISOString()
   }
 
   const handleSubmit = async () => {
     setLoading(true)
 
     try {
-      // Save prediction to database (without actual_temp and difference)
-      const { data: savedData, error } = await supabase
+      // Fetch actual temperature
+      const currentTemp = await fetchActualTemperature()
+
+      if (currentTemp === null) {
+        alert('온도를 가져오는데 실패했습니다. 다시 시도해주세요.')
+        setLoading(false)
+        return
+      }
+
+      setActualTemp(currentTemp)
+      const diff = Math.abs(prediction - currentTemp)
+      setDifference(diff)
+
+      // Save prediction to database with result
+      const { error } = await supabase
         .from('predictions')
         .insert([
           {
             user_id: userId || 'anonymous',
             prediction_temp: prediction,
-            draw_time: getNextDrawTime()
+            actual_temp: currentTemp,
+            difference: diff,
+            draw_time: new Date().toISOString()
           }
         ])
-        .select()
 
       if (error) {
         console.error('Error saving prediction:', error)
-        alert('예측 저장 실패: ' + error.message)
-        setLoading(false)
-        return
       }
 
-      console.log('Prediction saved:', savedData)
       setIsSubmitted(true)
+      loadLeaderboard() // Refresh leaderboard
     } catch (error) {
       console.error('Error:', error)
       alert('오류가 발생했습니다')
@@ -152,42 +146,54 @@ function App() {
             disabled={loading}
             className="submit-button"
           >
-            {loading ? '확인 중...' : '예측 제출하기'}
+            {loading ? '확인 중...' : '정답 확인하기'}
           </button>
 
           <div className="info-box">
-            <p>💰 참여비: 10원부터 (~$0.007 USDC)</p>
-            <p>🏆 상금 풀: Coming Soon</p>
-            <p>⏰ 다음 결과 발표: {nextDrawTime}</p>
+            <p>🌊 현재 한강 수온을 맞춰보세요!</p>
+            <p>🎯 슬라이더를 움직여 온도를 선택하세요</p>
           </div>
         </div>
       ) : (
         <div className="result-section">
-          <h2>✅ 예측 제출 완료!</h2>
+          <h2>🎯 결과 발표!</h2>
           <div className="result-box">
             <div className="result-item">
               <span className="label">내 예측:</span>
               <span className="value">{prediction}°C</span>
             </div>
             <div className="result-item highlight">
-              <span className="label">결과 발표:</span>
-              <span className="value">{nextDrawTime}</span>
+              <span className="label">실제 온도:</span>
+              <span className="value">{actualTemp}°C</span>
+            </div>
+            <div className="result-item">
+              <span className="label">오차:</span>
+              <span className="value">±{difference?.toFixed(1)}°C</span>
             </div>
           </div>
 
           <div className="info-message">
-            <p>🎯 {nextDrawTime}에 결과가 발표됩니다!</p>
-            <p>리더보드에서 순위를 확인하세요</p>
+            {difference !== null && difference < 0.5 && (
+              <p>🎉 완벽합니다! 거의 정확하게 맞추셨어요!</p>
+            )}
+            {difference !== null && difference >= 0.5 && difference < 2 && (
+              <p>👍 훌륭합니다! 매우 근접했어요!</p>
+            )}
+            {difference !== null && difference >= 2 && (
+              <p>💪 다시 도전해보세요!</p>
+            )}
           </div>
 
           <button
             onClick={() => {
               setIsSubmitted(false)
               setPrediction(15)
+              setActualTemp(null)
+              setDifference(null)
             }}
             className="retry-button"
           >
-            새로운 예측 하기
+            다시 맞추기
           </button>
         </div>
       )}
@@ -225,7 +231,7 @@ function App() {
 
       <footer>
         <p className="footer-text">
-          매일 12시, 18시 결과 발표 | 가장 근접한 예측자에게 상금 분배
+          실시간 한강 수온 퀴즈 | 오차가 적을수록 순위가 올라갑니다
         </p>
       </footer>
     </div>
