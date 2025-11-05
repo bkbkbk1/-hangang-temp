@@ -12,6 +12,7 @@ function App() {
   const [showLeaderboard, setShowLeaderboard] = useState(false)
   const [actualTemp, setActualTemp] = useState<number | null>(null)
   const [difference, setDifference] = useState<number | null>(null)
+  const [usernameCache, setUsernameCache] = useState<{[key: string]: string}>({})
 
   useEffect(() => {
     const init = async () => {
@@ -35,6 +36,33 @@ function App() {
     init()
   }, [])
 
+  const fetchUsername = async (fid: string) => {
+    // Check cache first
+    if (usernameCache[fid]) {
+      return usernameCache[fid]
+    }
+
+    try {
+      const response = await fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`, {
+        headers: {
+          'accept': 'application/json',
+          'api_key': 'NEYNAR_API_DOCS'
+        }
+      })
+      const data = await response.json()
+
+      if (data.users && data.users.length > 0) {
+        const username = data.users[0].username
+        setUsernameCache(prev => ({ ...prev, [fid]: username }))
+        return username
+      }
+    } catch (error) {
+      console.error('Error fetching username:', error)
+    }
+
+    return `fid:${fid}`
+  }
+
   const loadLeaderboard = async () => {
     // Get all predictions with actual results
     const { data, error } = await supabase
@@ -53,6 +81,7 @@ function App() {
       if (!acc[userId]) {
         acc[userId] = {
           user_id: userId,
+          username: '',
           accurate_count: 0,
           total_attempts: 0,
           best_difference: entry.difference
@@ -80,7 +109,15 @@ function App() {
       })
       .slice(0, 10)
 
-    setLeaderboard(sortedLeaderboard)
+    // Fetch usernames for all FIDs
+    const leaderboardWithUsernames = await Promise.all(
+      sortedLeaderboard.map(async (entry: any) => ({
+        ...entry,
+        username: await fetchUsername(entry.user_id)
+      }))
+    )
+
+    setLeaderboard(leaderboardWithUsernames)
   }
 
   const fetchActualTemperature = async () => {
@@ -252,7 +289,7 @@ function App() {
                 <div key={entry.user_id} className="leaderboard-item">
                   <span className="rank">#{index + 1}</span>
                   <div className="leader-info">
-                    <span className="user-id">FID: {entry.user_id}</span>
+                    <span className="user-id">@{entry.username}</span>
                     <span className="prediction">{entry.accurate_count}회 맞춤 (총 {entry.total_attempts}회)</span>
                   </div>
                   <span className="diff">최고 ±{entry.best_difference.toFixed(1)}°C</span>
