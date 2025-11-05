@@ -188,6 +188,7 @@ function App() {
       <header>
         <h1>🌊 한강 몇도?</h1>
         <p>오늘의 한강 수온을 맞춰보세요!</p>
+        <p className="update-info">⏱️ 1시간마다 물온도 업데이트</p>
       </header>
 
       {!isSubmitted ? (
@@ -221,8 +222,8 @@ function App() {
           </button>
 
           <div className="info-box">
-            <p>🌊 현재 한강 수온을 맞춰보세요!</p>
-            <p>🎯 슬라이더를 움직여 온도를 선택하세요</p>
+            <p>🌊 실시간 한강 수온을 맞춰보세요!</p>
+            <p>⏱️ 한강 수온은 1시간마다 업데이트됩니다</p>
           </div>
         </div>
       ) : (
