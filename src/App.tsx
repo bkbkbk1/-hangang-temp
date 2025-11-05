@@ -36,17 +36,51 @@ function App() {
   }, [])
 
   const loadLeaderboard = async () => {
+    // Get all predictions with actual results
     const { data, error } = await supabase
       .from('predictions')
       .select('*')
       .not('difference', 'is', null)
-      .order('difference', { ascending: true })
-      .order('created_at', { ascending: true }) // 선착순: 같은 오차면 먼저 제출한 사람이 이김
-      .limit(10)
 
-    if (!error && data) {
-      setLeaderboard(data)
+    if (error || !data) {
+      console.error('Error loading leaderboard:', error)
+      return
     }
+
+    // Group by user and count accurate predictions (difference <= 0.5°C)
+    const userStats = data.reduce((acc: any, entry: any) => {
+      const userId = entry.user_id
+      if (!acc[userId]) {
+        acc[userId] = {
+          user_id: userId,
+          accurate_count: 0,
+          total_attempts: 0,
+          best_difference: entry.difference
+        }
+      }
+
+      acc[userId].total_attempts++
+      if (entry.difference <= 0.5) {
+        acc[userId].accurate_count++
+      }
+      if (entry.difference < acc[userId].best_difference) {
+        acc[userId].best_difference = entry.difference
+      }
+
+      return acc
+    }, {})
+
+    // Convert to array and sort by accurate count, then by best difference
+    const sortedLeaderboard = Object.values(userStats)
+      .sort((a: any, b: any) => {
+        if (b.accurate_count !== a.accurate_count) {
+          return b.accurate_count - a.accurate_count
+        }
+        return a.best_difference - b.best_difference
+      })
+      .slice(0, 10)
+
+    setLeaderboard(sortedLeaderboard)
   }
 
   const fetchActualTemperature = async () => {
@@ -214,14 +248,14 @@ function App() {
             <p className="no-data">아직 완료된 예측이 없습니다</p>
           ) : (
             <div className="leaderboard-list">
-              {leaderboard.map((entry, index) => (
-                <div key={entry.id} className="leaderboard-item">
+              {leaderboard.map((entry: any, index: number) => (
+                <div key={entry.user_id} className="leaderboard-item">
                   <span className="rank">#{index + 1}</span>
                   <div className="leader-info">
-                    <span className="user-id">User {entry.user_id.slice(0, 8)}</span>
-                    <span className="prediction">{entry.prediction_temp}°C 예측</span>
+                    <span className="user-id">FID: {entry.user_id}</span>
+                    <span className="prediction">{entry.accurate_count}회 맞춤 (총 {entry.total_attempts}회)</span>
                   </div>
-                  <span className="diff">±{entry.difference}°C</span>
+                  <span className="diff">최고 ±{entry.best_difference.toFixed(1)}°C</span>
                 </div>
               ))}
             </div>
