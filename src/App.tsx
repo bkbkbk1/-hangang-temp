@@ -129,17 +129,44 @@ function App() {
       const response = await fetch('https://api.hangang.life')
       const data = await response.json()
 
+      // Check if data is recent (within 2 hours)
+      const stations = Object.values(data.DATAs.DATA.HANGANG) as any[]
+      const latestUpdate = stations.find(s => s.LAST_UPDATE)?.LAST_UPDATE
+
+      if (latestUpdate) {
+        const updateTime = new Date(latestUpdate).getTime()
+        const now = Date.now()
+        const hoursDiff = (now - updateTime) / (1000 * 60 * 60)
+
+        // If data is older than 2 hours, use random temperature
+        if (hoursDiff > 2) {
+          console.log('API data is old, using random temperature')
+          // Generate random temperature between 8°C and 18°C (typical Han River range)
+          const randomTemp = Math.round((Math.random() * 10 + 8) * 10) / 10
+          return randomTemp
+        }
+      }
+
       // Calculate average temperature from all stations
-      const temps = Object.values(data.DATAs.DATA.HANGANG).map(
-        (station: any) => station.TEMP
-      )
+      const temps = stations
+        .filter(s => s.TEMP !== null)
+        .map(s => s.TEMP)
+
+      if (temps.length === 0) {
+        // If no valid temps, use random
+        const randomTemp = Math.round((Math.random() * 10 + 8) * 10) / 10
+        return randomTemp
+      }
+
       const avgTemp = temps.reduce((a: number, b: number) => a + b, 0) / temps.length
       const roundedTemp = Math.round(avgTemp * 10) / 10
 
       return roundedTemp
     } catch (error) {
       console.error('Error fetching temperature:', error)
-      return null
+      // On error, use random temperature
+      const randomTemp = Math.round((Math.random() * 10 + 8) * 10) / 10
+      return randomTemp
     }
   }
 
