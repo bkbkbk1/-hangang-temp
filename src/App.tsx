@@ -13,7 +13,7 @@ function App() {
   const [showLeaderboard, setShowLeaderboard] = useState(false)
   const [actualTemp, setActualTemp] = useState<number | null>(null)
   const [difference, setDifference] = useState<number | null>(null)
-  const [usernameCache, setUsernameCache] = useState<{[key: string]: string}>({})
+  const [usernameCache, setUsernameCache] = useState<{[key: string]: {username: string, pfp_url: string}}>({})
   const [language, setLanguage] = useState<Language>('ko')
 
   const t = translations[language]
@@ -40,7 +40,7 @@ function App() {
     init()
   }, [])
 
-  const fetchUsername = async (fid: string) => {
+  const fetchUserInfo = async (fid: string) => {
     // Check cache first
     if (usernameCache[fid]) {
       return usernameCache[fid]
@@ -56,15 +56,19 @@ function App() {
       const data = await response.json()
 
       if (data.users && data.users.length > 0) {
-        const username = data.users[0].username
-        setUsernameCache(prev => ({ ...prev, [fid]: username }))
-        return username
+        const user = data.users[0]
+        const userInfo = {
+          username: user.username,
+          pfp_url: user.pfp_url || ''
+        }
+        setUsernameCache(prev => ({ ...prev, [fid]: userInfo }))
+        return userInfo
       }
     } catch (error) {
-      console.error('Error fetching username:', error)
+      console.error('Error fetching user info:', error)
     }
 
-    return `fid:${fid}`
+    return { username: `fid:${fid}`, pfp_url: '' }
   }
 
   const loadLeaderboard = async () => {
@@ -113,15 +117,19 @@ function App() {
       })
       .slice(0, 10)
 
-    // Fetch usernames for all FIDs
-    const leaderboardWithUsernames = await Promise.all(
-      sortedLeaderboard.map(async (entry: any) => ({
-        ...entry,
-        username: await fetchUsername(entry.user_id)
-      }))
+    // Fetch user info for all FIDs
+    const leaderboardWithUserInfo = await Promise.all(
+      sortedLeaderboard.map(async (entry: any) => {
+        const userInfo = await fetchUserInfo(entry.user_id)
+        return {
+          ...entry,
+          username: userInfo.username,
+          pfp_url: userInfo.pfp_url
+        }
+      })
     )
 
-    setLeaderboard(leaderboardWithUsernames)
+    setLeaderboard(leaderboardWithUserInfo)
   }
 
   const fetchActualTemperature = async () => {
@@ -330,13 +338,15 @@ function App() {
               {leaderboard.map((entry: any, index: number) => (
                 <div key={entry.user_id} className="leaderboard-item">
                   <span className="rank">#{index + 1}</span>
+                  {entry.pfp_url && (
+                    <img src={entry.pfp_url} alt={entry.username} className="profile-pic" />
+                  )}
                   <div className="leader-info">
                     <span className="user-id">@{entry.username}</span>
                     <span className="prediction">
                       {entry.accurate_count} {t.timesCorrect} ({t.totalAttempts} {entry.total_attempts} {t.attempts})
                     </span>
                   </div>
-                  <span className="diff">{t.best} ±{entry.best_difference.toFixed(1)}°C</span>
                 </div>
               ))}
             </div>
