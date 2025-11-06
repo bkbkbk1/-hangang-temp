@@ -405,9 +405,11 @@ function App() {
               {leaderboard.map((entry: any, index: number) => (
                 <div key={entry.user_id} className="leaderboard-item">
                   <span className="rank">#{index + 1}</span>
-                  {entry.pfp_url && (
-                    <img src={entry.pfp_url} alt={entry.username} className="profile-pic" />
-                  )}
+                  <img
+                    src={entry.pfp_url || 'https://via.placeholder.com/40/667eea/ffffff?text=👤'}
+                    alt={entry.username}
+                    className="profile-pic"
+                  />
                   <div className="leader-info">
                     <span className="user-id">@{entry.username}</span>
                     <span className="prediction">
