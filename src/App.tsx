@@ -406,9 +406,12 @@ function App() {
                 <div key={entry.user_id} className="leaderboard-item">
                   <span className="rank">#{index + 1}</span>
                   <img
-                    src={entry.pfp_url || 'https://via.placeholder.com/40/667eea/ffffff?text=👤'}
+                    src={entry.pfp_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${entry.user_id}`}
                     alt={entry.username}
                     className="profile-pic"
+                    onError={(e) => {
+                      e.currentTarget.src = `https://api.dicebear.com/7.x/identicon/svg?seed=${entry.user_id}`
+                    }}
                   />
                   <div className="leader-info">
                     <span className="user-id">@{entry.username}</span>
