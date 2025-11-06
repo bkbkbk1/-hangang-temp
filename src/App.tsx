@@ -15,6 +15,7 @@ function App() {
   const [difference, setDifference] = useState<number | null>(null)
   const [usernameCache, setUsernameCache] = useState<{[key: string]: {username: string, pfp_url: string}}>({})
   const [language, setLanguage] = useState<Language>('ko')
+  const [userRank, setUserRank] = useState<number | null>(null)
 
   const t = translations[language]
 
@@ -212,6 +213,9 @@ function App() {
         console.error('Error saving prediction:', error)
       }
 
+      // Calculate user rank
+      await calculateUserRank()
+
       setIsSubmitted(true)
       loadLeaderboard() // Refresh leaderboard
     } catch (error) {
@@ -220,6 +224,55 @@ function App() {
     }
 
     setLoading(false)
+  }
+
+  const calculateUserRank = async () => {
+    try {
+      // Get all predictions
+      const { data, error } = await supabase
+        .from('predictions')
+        .select('*')
+        .not('difference', 'is', null)
+
+      if (error || !data) return
+
+      // Group by user and count accurate predictions
+      const userStats = data.reduce((acc: any, entry: any) => {
+        const uid = entry.user_id
+        if (!acc[uid]) {
+          acc[uid] = {
+            user_id: uid,
+            accurate_count: 0,
+            total_attempts: 0,
+            best_difference: entry.difference
+          }
+        }
+
+        acc[uid].total_attempts++
+        if (entry.difference <= 0.5) {
+          acc[uid].accurate_count++
+        }
+        if (entry.difference < acc[uid].best_difference) {
+          acc[uid].best_difference = entry.difference
+        }
+
+        return acc
+      }, {})
+
+      // Sort and find user rank
+      const sortedUsers = Object.values(userStats)
+        .sort((a: any, b: any) => {
+          if (b.accurate_count !== a.accurate_count) {
+            return b.accurate_count - a.accurate_count
+          }
+          return a.best_difference - b.best_difference
+        })
+
+      const rank = sortedUsers.findIndex((u: any) => u.user_id === userId) + 1
+      setUserRank(rank > 0 ? rank : null)
+    } catch (error) {
+      console.error('Error calculating rank:', error)
+    }
   }
 
   return (
@@ -293,6 +346,16 @@ function App() {
             </div>
           </div>
 
+          {userRank !== null && userRank <= 5 && (
+            <div className="rank-badge">
+              <div className="rank-number">#{userRank}</div>
+              <div className="rank-text">
+                <p className="rank-title">🏆 {t.congratsTop5}</p>
+                <p className="rank-subtitle">{t.currentRank} {userRank}{t.rankAchieved}</p>
+              </div>
+            </div>
+          )}
+
           <div className="info-message">
             {difference !== null && difference < 0.5 && (
               <p>🎉 {t.perfect}</p>
@@ -303,6 +366,9 @@ function App() {
             {difference !== null && difference >= 2 && (
               <p>💪 {t.tryAgain}</p>
             )}
+            {userRank !== null && userRank > 5 && (
+              <p>📊 {t.currentRank} #{userRank}</p>
+            )}
           </div>
 
           <button
@@ -311,6 +377,7 @@ function App() {
               setPrediction(15)
               setActualTemp(null)
               setDifference(null)
+              setUserRank(null)
             }}
             className="retry-button"
           >

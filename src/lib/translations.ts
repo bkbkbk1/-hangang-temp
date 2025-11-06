@@ -23,7 +23,10 @@ export const translations = {
     totalAttempts: "총",
     attempts: "회",
     best: "최고",
-    footer: "실시간 한강 수온 퀴즈 | 오차가 적을수록 순위가 올라갑니다"
+    footer: "실시간 한강 수온 퀴즈 | 오차가 적을수록 순위가 올라갑니다",
+    rankAchieved: "등 달성!",
+    congratsTop5: "축하합니다! TOP 5에 진입했습니다!",
+    currentRank: "현재 순위:"
   },
   en: {
     title: "Han River Temp?",
@@ -49,7 +52,10 @@ export const translations = {
     totalAttempts: "out of",
     attempts: "attempts",
     best: "best",
-    footer: "Real-time Han River quiz | Lower difference = Higher rank"
+    footer: "Real-time Han River quiz | Lower difference = Higher rank",
+    rankAchieved: "Rank Achieved!",
+    congratsTop5: "Congratulations! You're in TOP 5!",
+    currentRank: "Current Rank:"
   }
 }
 
